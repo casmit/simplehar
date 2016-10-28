@@ -37,10 +37,10 @@ var processArgs = function(argv) {
 			var i = 0,
 				har;
 			while( !har && i < ilen) {
-				if(args[i].indexOf('har=') === 0)
-					har = args[i].split('=')[1];
-				// if(args[i].lastIndexOf('.har') + 4 === args[i].length)
-				// 	har = args[i];
+				// if(args[i].indexOf('har=') === 0)
+				// 	har = args[i].split('=')[1];
+				if(args[i].lastIndexOf('.har') + 4 === args[i].length)
+					har = args[i];
 				i++;
 			}
 
