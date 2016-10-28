@@ -1,41 +1,41 @@
 var harParser = module.exports = function(har, htmlEncode) {
 	'use strict';
-	
+
 	har = har.log;
-	
+
 	// if(!htmlEncode)
 	// 	console.error('htmlEncode not found. The content tab will not be displayed');
-	
+
 	var
-	
+
 	verticalRowMarker = function(cname, title, value, left) {
 		var result = '<span class="' + cname + '" data-toggle="tooltip" ';
-		
+
 		result += 'title="[' + title + '] (' + harParser.timeFormatter(value) +')" ';
 		result += 'style="left:' + (parseFloat(left)>100?'100%':left) + '"></span>';
-		
+
 		return result;
 	},
-	
+
 	sortEntries = function(a, b) {
 		a = a.startedDateTime;
 		b = b.startedDateTime;
-		
+
 		if(a)
 			a = (new Date(a)).getTime();
 		else
 			a = 0;
-		
+
 		if(b)
 			b = (new Date(b)).getTime();
 		else
 			b = 0;
-		
-		
+
+
 		return a - b;
-		
+
 	},
-	
+
 	filterEntryByPage = function(entries, id) {
 		var newEntries, i, ilen, entry;
 		if(id && id !== '') {
@@ -49,7 +49,7 @@ var harParser = module.exports = function(har, htmlEncode) {
 		}
 		return entries;
 	},
-	
+
 	verticalMarkers = function(entries, params) {
 		var i = 0,
 			j = 0,
@@ -82,7 +82,7 @@ var harParser = module.exports = function(har, htmlEncode) {
 				}
 			],
 			jlen = args.length;
-		
+
 		for(;i<ilen;i++) {
 			for(j=0;j<jlen;j++) {
 				if(args[j].verify)
@@ -97,7 +97,7 @@ var harParser = module.exports = function(har, htmlEncode) {
 					entries[i][args[j].cname] = '';
 			}
 		}
-		
+
 		return entries;
 	},
 	prepareInfo = function(requests, size, load) {
@@ -108,15 +108,15 @@ var harParser = module.exports = function(har, htmlEncode) {
 		if(load.content)
 			info+= '<span title="DOMContentLoaded" class="text-success">('+load.content+')</span> ';
 		info+= '<span title="Page Loaded" class="text-danger">' + load.on + '</span></th>';
-		
+
 		return info;
 	},
 	parsePages = function(har) {
 		var hars = har.pages.filter(function(page) {return !!page.id;});
-		
+
 		if(!hars.length)
 			hars = [har.pages[0]];
-		
+
 		hars = hars.map(function(page) {
 			var entries = filterEntryByPage(har.entries, page.id),
 				pageTimings = page.pageTimings,
@@ -129,40 +129,40 @@ var harParser = module.exports = function(har, htmlEncode) {
 				ilen = entries.length,
 				progress = [],
 				prop, lastTime, hResponse, hProgress, hEntry;
-			
+
 			entries.sort(sortEntries);
-			
+
 			for(;i<ilen;i++) {
 				hEntry = entries[i];
 				hResponse = hEntry.response;
-				
-				
+
+
 				totalSize += hResponse.content.size;
 				totalCompressedSize += hResponse.bodySize;
-				
+
 				hProgress = harParser.parseProgress(hEntry);
 				progress.push(hProgress);
-				
-				
+
+
 				hEntry = entries[i] = harParser.convertHar(hEntry, i, htmlEncode);
-				
+
 				lastTimeArray.push(
 					(hProgress.total + hProgress.startedDateTime) - progress[0].startedDateTime
 				);
 			}
 
-			
+
 			lastTime = Math.max.apply(null, lastTimeArray);
-			
+
 			progress = harParser.convertProgress(progress, lastTime);
-			
+
 			for(i=0;i<ilen;i++) {
 				hProgress = progress[i];
 				for(prop in hProgress) {
 					entries[i][prop] = hProgress[prop];
 				}
 			}
-			
+
 			entries = verticalMarkers(entries, {
 				onLoad:onLoad,
 				lastTime:lastTime,
@@ -170,18 +170,18 @@ var harParser = module.exports = function(har, htmlEncode) {
 				loadText:onContentLoad?harParser.pct(onContentLoad, lastTime):'',
 				start:pageTimings._startRender || false
 			});
-			
-			
-			
-			
-			
-			
+
+
+
+
+
+
 			entries.title = page.title;
 			entries.pRef = page.id;
-			
+
 			if(onContentLoad !== false)
 				onContentLoad = harParser.timeFormatter(onContentLoad);
-			
+
 			entries.info = prepareInfo(
 				entries.length,
 				{
@@ -193,17 +193,17 @@ var harParser = module.exports = function(har, htmlEncode) {
 					on:harParser.timeFormatter(onLoad)
 				}
 			);
-			
+
 			return entries;
 		});
-		
+
 		return hars;
-		
+
 	};
-	
+
 	return parsePages(har);
-	
-	
+
+
 };
 //Decode url texts
 harParser.decode = function(str) {
@@ -232,7 +232,7 @@ harParser.parseMethod = function(method) {
 	'use strict';
 	if(method.toLowerCase() === 'get')
 		return '';
-	
+
 	return method && harParser.strong(method + ' ') || '';
 };
 
@@ -244,7 +244,7 @@ harParser.parseUrl = function(url, complete) {
 	'use strict';
 	var urlMatch = url.match(harParser.urlRe),
 		urlFile;
-	
+
 	if(!urlMatch) {
 		if(!url.indexOf('data:')) {
 			urlFile = harParser.strong('Data:');
@@ -256,7 +256,7 @@ harParser.parseUrl = function(url, complete) {
 	else {
 		if(!urlMatch[4]) {
 			urlFile = urlMatch[3];
-			
+
 			if(complete)
 				urlFile = urlMatch[1] + urlMatch[2] + urlFile;
 			else if(!urlFile)
@@ -265,12 +265,12 @@ harParser.parseUrl = function(url, complete) {
 		else
 			urlFile = urlMatch[4];
 	}
-	
+
 	urlFile = urlFile.replace(/^\s*/g,'').replace(/\s*$/g,'');
-	
+
 	if(!url.indexOf('https'))
 		urlFile = harParser.strong(urlFile, 'text-success');
-	
+
 	return {
 		params: harParser.decode(urlMatch && urlMatch[5] || ''),
 		file: urlFile,
@@ -281,34 +281,34 @@ harParser.parseUrl = function(url, complete) {
 harParser.parseStatus = function(code, statusText) {
 	'use strict';
 	var status = code;
-	
+
 	statusText = statusText || '';
-	
+
 	if(code >= 500)
 		status = harParser.strong(code, 'text-danger');
 	else if(code >= 400)
 		status = harParser.strong(code, 'text-warning');
 	else if(code < 100)
 		status = harParser.em(code, 'text-muted');
-	
-	
+
+
 	return {
 		code: code,
 		status: status,
 		complete: code + (statusText?(' ' + statusText):'')
 	};
-	
+
 };
 //Return object with original and compressed size formatted and without format
 harParser.parseSize = function(size, compressed, status) {
 	'use strict';
 	var mainSize = compressed;
-	
+
 	if(compressed < 0)
 		mainSize = 0;
 	else if(compressed === 0)
 		mainSize = size;
-	
+
 	mainSize = harParser.dataSizeFormatter(mainSize);
 
 	if(status === 304)
@@ -319,8 +319,8 @@ harParser.parseSize = function(size, compressed, status) {
 		else
 			mainSize = harParser.strong(mainSize);
 	}
-	
-	
+
+
 	return {
 		originalSize: size + ' Bytes',
 		originalCompressed: compressed + ' Bytes',
@@ -334,24 +334,24 @@ harParser.parseMime = function(mimeType, url) {
 	'use strict';
 	var inline = false,
 		mime;
-	
+
 	if(!mimeType && url && !url.indexOf('data:')) {
 		mimeType = url.match(harParser.urlDataRe);
-		
+
 		if(mimeType && mimeType[1]) {
 			mimeType = mimeType[1] + '; ';
 			mimeType += (mimeType[2] && mimeType[2].substr(0,mimeType[2].length-1) || '');
 		}
 		else
 			mimeType = false;
-		
+
 		inline = true;
 	}
-	
-	
+
+
 	if(mimeType) {
 		mime = mimeType.split(';')[0].split('/');
-		
+
 		return {
 			complete: mimeType.replace('; ', ''),
 			type: mime[1],
@@ -374,13 +374,13 @@ harParser.parseContent = function(content, url, mime, htmlEncode) {
 	var tabs = '',
 		result = '',
 		_result = '';
-	
+
 	if(mime.base === 'image' || htmlEncode) {
 		if(content || !url.indexOf('data:')) {
 			tabs += '<li><a href="#content">[Content]</a></li>';
 			result += '<div class="content">';
-			
-			
+
+
 			if(mime.base === 'image') {
 				if(content) {
 					result += '<img src="data:' + mime.base + '/' + mime.type;
@@ -399,9 +399,9 @@ harParser.parseContent = function(content, url, mime, htmlEncode) {
 					result += '<pre class="pre-scrollable">' + _result + '</pre>';
 				}
 			}
-			
+
 			result += '</div>';
-			
+
 		}
 		else {
 			tabs += '<li><a href="#content">[Content]</a></li>';
@@ -441,9 +441,9 @@ harParser.parseProgress = function(entry) {
 		_wait = wait >= 0?wait:0,
 		_receive = receive >= 0?receive:0,
 		_ssl = ssl >= 0?ssl:0;
-	
-	
-	
+
+
+
 	return {
 		startedDateTime:(new Date(entry.startedDateTime)).getTime(),
 		time: entry.time,
@@ -486,14 +486,14 @@ harParser.dataSizeFormatter = function(value, precision) {
 	'use strict';
 	var ext = [' Bytes', ' KB', ' MB', ' GB', ' TB'],
 		i = 0;
-	
+
 	value = value >= 0 ? value : 0;
-	
+
 	while(value > 1024 && i < (ext.length - 1)) {
 		value /= 1024;
 		i++;
 	}
-	
+
 	return harParser.precisionFormatter(value, precision || 2) + ext[i];
 };
 //Format float point precision
@@ -501,17 +501,17 @@ harParser.precisionFormatter = function(number, precision) {
 	'use strict';
 	var matcher, fPoint;
 	precision = precision || 2;
-	
-	
+
+
 	number = number.toFixed(precision);
-	
+
 	if(precision === '0')
 		return number;
-	
+
 	fPoint = number.split('.')[1];
-	
+
 	matcher = fPoint.match(/0+/);
-	
+
 	if(matcher && matcher[0].length === fPoint.length) {
 		return number.split('.')[0];
 	}
@@ -527,7 +527,7 @@ harParser.pct = function(value, pct, symbol) {
 	if(!value)
 		return 0;
 	symbol = symbol || '%';
-	return ((value * 100) / pct) + symbol;
+	return ((value * 100) / pct).toFixed(3) + symbol;
 };
 //Format time based on miliseconds
 harParser.timeFormatter = function(time, precision) {
@@ -535,27 +535,27 @@ harParser.timeFormatter = function(time, precision) {
 	var ext = ['ms', 's', 'min', 'h'],
 		div = [1000, 60, 60, 60],
 		i = 0;
-	
+
 	time = time >= 0 ? time : 0;
-	
+
 	while(time >= div[i] && i < (ext.length - 1)) {
 		time /= div[i];
 		i++;
 	}
-	
+
 	return harParser.precisionFormatter(time, precision || 2) + ext[i];
 };
 //Decode multiple encoded text
 harParser.decoder = function(text) {
 	'use strict';
-	
+
 	var oldtext;
-	
+
 	do {
 		oldtext = text;
 		text = harParser.decode(text);
 	}while(text !== oldtext);
-	
+
 	return text;
 };
 //Decode a list of objects
@@ -564,10 +564,10 @@ harParser.decodeObj = function(objList) {
 	var newObjList = [],
 		i = 0,
 		ilen, obj;
-	
+
 	if(!objList || !objList.length)
 		return objList;
-	
+
 	for(ilen=objList.length;i<ilen;i++) {
 		obj = objList[i];
 		newObjList.push({
@@ -575,30 +575,30 @@ harParser.decodeObj = function(objList) {
 			value:harParser.decoder(obj.value)
 		});
 	}
-	
+
 	return newObjList;
-	
+
 };
 //Filter an attribute value in an object list
 harParser.filterObjList = function(objList, attr, filter) {
 	'use strict';
-	
+
 	var newObjList = [],
 		i = 0,
 		ilen,
 		obj;
-	
+
 	if(!filter)
 		return objList;
-	
+
 	filter = filter.toLowerCase();
-	
+
 	for(ilen=objList.length;i<ilen;i++) {
 		obj = objList[i];
 		if(!obj.hasOwnProperty(attr) || obj[attr].toLowerCase().indexOf(filter) === -1)
 			newObjList.push(obj);
 	}
-	
+
 	return newObjList;
 };
 
@@ -609,18 +609,18 @@ harParser.objToDl = function(objList) {
 		i = 0,
 		ilen = objList && objList.length,
 		obj;
-	
+
 	if(!ilen)
 		return '';
-	
+
 	for(;i<ilen;i++) {
 		obj = objList[i];
 		dl += '<dt>' + obj.name + '</dt>';
 		dl += '<dd>' + obj.value.replace(/;/g, ';<br>') + '</dd>';
 	}
-	
+
 	return (dl + '</dl>');
-	
+
 };
 //Generate an object with the tabs/titles and the content based in
 //the request and response objects
@@ -642,19 +642,19 @@ harParser.tabContainer = function(header, request, response) {
 			return '<h3 class="headers-title"><small>['+ title +']</small></h3>' + content;
 		},
 		liTab = function(tabId, title) {
-			return '<li><a href="#' + tabId + '">[' + title + ']</a></li>';
+			return '<li><a href="#' + tabId + '" data-pane="' + tabId + '">[' + title + ']</a></li>';
 		};
-	
-	
+
+
 	if(filter) {
 		rqTab = harParser.filterObjList(rqTab, 'name', filter);
 		rpTab = harParser.filterObjList(rpTab, 'name', filter);
 	}
-	
+
 	rq[tab] = harParser.objToDl(rqTab);
 	rp[tab] = harParser.objToDl(rpTab);
-	
-	
+
+
 	if(rq[tab] || rp[tab]) {
 		if(decode) {
 			rqTab = harParser.decodeObj(rqTab);
@@ -662,51 +662,51 @@ harParser.tabContainer = function(header, request, response) {
 			rq['d' + tab] = harParser.objToDl(rqTab);
 			rp['d' + tab] = harParser.objToDl(rpTab);
 		}
-		
-		
+
+
 		tabCapitalized = tab.charAt(0).toUpperCase() + tab.substr(1);
-		
+
 		result.tabs += liTab(tab, tabCapitalized);
-		
-		result.containers += '<div class="' + tab + '">';
-		
+
+		result.containers += '<div class="' + tab + '" style="display:none">';
+
 		if(rq[tab])
 			result.containers += headersTitle('Request ' + tabCapitalized, rq[tab]);
-		
+
 		if(rp[tab])
 			result.containers += headersTitle('Response ' + tabCapitalized, rp[tab]);
-		
+
 		result.containers += '</div>';
-		
-		
+
+
 		if(decode) {
-			
+
 			result.tabs += liTab('parsed' + tab, 'Parsed ' + tabCapitalized);
-		
+
 			result.containers += '<div class="parsed' + tab + '">';
-			
+
 			if(rq['d' + tab])
 				result.containers += headersTitle('Request ' + tabCapitalized, rq['d' + tab]);
-			
+
 			if(rp['d' + tab])
 				result.containers += headersTitle('Response ' + tabCapitalized, rp['d' + tab]);
-			
-			
+
+
 			result.containers += '</div>';
-			
-			
+
+
 		}
-		
-		
-		
+
+
+
 	}
-	
+
 	return result;
 };
 // Convert progress data to an object with converted data and HTML to tooltip
 harParser.convertProgress = function(progress, lastTime) {
 	'use strict';
-	
+
 	var firstTime = progress[0].startedDateTime,
 		i = 0,
 		ilen = progress.length,
@@ -725,11 +725,11 @@ harParser.convertProgress = function(progress, lastTime) {
 		progressRow = function(bg, title, value) {
 			if(value > 0) {
 				var result = '<p class=\'clearfix bg-' + bg + '\'>';
-				
+
 				result += tinyRow(title, value);
-				
+
 				result += '</p>';
-				
+
 				return result;
 			}
 			return '';
@@ -737,64 +737,64 @@ harParser.convertProgress = function(progress, lastTime) {
 		tinyRow = function(title, value) {
 			var result = '<strong>[' + title + ']: </strong> ',
 				time = harParser.timeFormatter(value, 3);
-			
+
 			if(parseFloat(time) === 0 && value > 0)
 				time = '< ' + harParser.timeFormatter(1, 3);
-			
+
 			result += '<em> ' + time + '</em>';
 			return result;
 		};
-	
-	
+
+
 	for(;i<ilen;i++) {
-		
+
 		r = {};
-		
+
 		p = progress[i];
-		
+
 		startedTime = p.startedDateTime - firstTime;
-		
+
 		progressContent = '';
-		
+
 		for(j=0;j<jlen;j++) {
 			step = steps[j];
-			
+
 			if(p[step.step] >= 0) {
 				progressContent += progressRow(step.classname, step.title, p[step.step]);
 				r[step.step + 'Width'] = harParser.pct(p[step.step], lastTime);
 			}
 			else
 				r[step.step + 'Width'] = '0';
-			
+
 		}
-		
-		
+
+
 		if(startedTime >= 0)
 			r.progressStart = tinyRow('Start Time', startedTime);
 		else
 			r.progressStart = '';
-		
+
 		r.progressContent = progressContent;
-		
-		
+
+
 		r.startPosition = harParser.pct(startedTime, lastTime);
-		
-		
+
+
 		r.totalTime = harParser.timeFormatter(p.total);
-		
+
 		result.push(r);
 	}
-	
+
 	return result;
-	
+
 };
 // Convert a request into another object
 harParser.convertHar = function(entry, i, htmlEncode) {
 	'use strict';
-	
+
 	var __request = entry.request,
 		__response = entry.response,
-		
+
 		method = harParser.parseMethod(__request.method),
 		url = harParser.parseUrl(__request.url, i > 1),
 		status = harParser.parseStatus(__response.status, __response.statusText),
@@ -816,7 +816,7 @@ harParser.convertHar = function(entry, i, htmlEncode) {
 		j = 0,
 		jlen = infos.length,
 		info;
-	
+
 	// TABS INFO
 	for(;j<jlen;j++) {
 		info = infos[j];
@@ -826,9 +826,9 @@ harParser.convertHar = function(entry, i, htmlEncode) {
 	}
 	tabs += responseContent.tabs;
 	containers += responseContent.result;
-	
-	
-	
+
+
+
 	return {
 		method: method,
 		fullUrl: url.complete,
@@ -845,5 +845,5 @@ harParser.convertHar = function(entry, i, htmlEncode) {
 		tabContainers: containers,
 		fileContent: responseContent._result
 	};
-	
+
 };
