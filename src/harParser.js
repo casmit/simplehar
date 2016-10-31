@@ -377,8 +377,8 @@ harParser.parseContent = function(content, url, mime, htmlEncode) {
 
 	if(mime.base === 'image' || htmlEncode) {
 		if(content || !url.indexOf('data:')) {
-			tabs += '<li><div data-pane="content">[Content]</div></li>';
-			result += '<div class="content">';
+			tabs += '<li><button class="btn btn-primary btn-xs" data-pane="content">[Content]</button></li>';
+			result += '<div class="content" style="display:none">';
 
 
 			if(mime.base === 'image') {
@@ -404,8 +404,8 @@ harParser.parseContent = function(content, url, mime, htmlEncode) {
 
 		}
 		else {
-			tabs += '<li><div data-pane="content">[Content]</div></li>';
-			result += '<div class="content">';
+			tabs += '<li><button class="btn btn-primary btn-xs"  data-pane="content">[Content]</button></li>';
+			result += '<div class="content" style="display:none">';
 			if(mime.base === 'image') {
 				if(content) {
 					result += '<img src="data:' + mime.base + '/' + mime.type;
@@ -642,7 +642,7 @@ harParser.tabContainer = function(header, request, response) {
 			return '<h3 class="headers-title"><small>['+ title +']</small></h3>' + content;
 		},
 		liTab = function(tabId, title) {
-			return '<li><div data-pane="' + tabId + '">[' + title + ']</div></li>';
+			return '<li><button class="btn btn-primary btn-xs"  data-pane="' + tabId + '">[' + title + ']</button></li>';
 		};
 
 
@@ -668,7 +668,7 @@ harParser.tabContainer = function(header, request, response) {
 
 		result.tabs += liTab(tab, tabCapitalized);
 
-		result.containers += '<div class="' + tab + '" style="display:none">';
+		result.containers += '<div class="' + tab + '"' + ((tabId != 'headers') ? ' style="display:none"' : '') + '>';
 
 		if(rq[tab])
 			result.containers += headersTitle('Request ' + tabCapitalized, rq[tab]);
@@ -691,14 +691,9 @@ harParser.tabContainer = function(header, request, response) {
 			if(rp['d' + tab])
 				result.containers += headersTitle('Response ' + tabCapitalized, rp['d' + tab]);
 
-
 			result.containers += '</div>';
 
-
 		}
-
-
-
 	}
 
 	return result;
