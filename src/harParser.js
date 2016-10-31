@@ -377,7 +377,7 @@ harParser.parseContent = function(content, url, mime, htmlEncode) {
 
 	if(mime.base === 'image' || htmlEncode) {
 		if(content || !url.indexOf('data:')) {
-			tabs += '<li><a href="#content">[Content]</a></li>';
+			tabs += '<li><div data-pane="content">[Content]</div></li>';
 			result += '<div class="content">';
 
 
@@ -404,7 +404,7 @@ harParser.parseContent = function(content, url, mime, htmlEncode) {
 
 		}
 		else {
-			tabs += '<li><a href="#content">[Content]</a></li>';
+			tabs += '<li><div data-pane="content">[Content]</div></li>';
 			result += '<div class="content">';
 			if(mime.base === 'image') {
 				if(content) {
@@ -642,7 +642,7 @@ harParser.tabContainer = function(header, request, response) {
 			return '<h3 class="headers-title"><small>['+ title +']</small></h3>' + content;
 		},
 		liTab = function(tabId, title) {
-			return '<li><a href="#' + tabId + '" data-pane="' + tabId + '">[' + title + ']</a></li>';
+			return '<li><div data-pane="' + tabId + '">[' + title + ']</div></li>';
 		};
 
 
