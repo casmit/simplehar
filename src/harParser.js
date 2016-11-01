@@ -668,7 +668,7 @@ harParser.tabContainer = function(header, request, response) {
 
 		result.tabs += liTab(tab, tabCapitalized);
 
-		result.containers += '<div class="' + tab + '"' + ((tabId != 'headers') ? ' style="display:none"' : '') + '>';
+		result.containers += '<div class="' + tab + '"' + ((tab != 'headers') ? ' style="display:none"' : '') + '>';
 
 		if(rq[tab])
 			result.containers += headersTitle('Request ' + tabCapitalized, rq[tab]);
